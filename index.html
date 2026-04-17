@@ -7,30 +7,57 @@
   <style>
     body {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      max-width: 480px;
+      max-width: 520px;
       margin: 2rem auto;
       padding: 0 1rem;
       background: #f9f9f9;
     }
     h1 { font-size: 1.5rem; margin-bottom: 0.25rem; }
     p { color: #555; margin-bottom: 1rem; }
-    label, input, select, button {
-      font-size: 16px;
-    }
-    .row {
-      margin-bottom: 0.75rem;
-    }
     label {
       display: block;
       margin-bottom: 0.25rem;
       font-weight: 600;
+      font-size: 16px;
     }
-    input, select {
+    input[type=text], select {
       width: 100%;
       padding: 0.4rem 0.6rem;
       box-sizing: border-box;
       border: 1px solid #ccc;
       border-radius: 6px;
+      font-size: 16px;
+    }
+    .row { margin-bottom: 0.75rem; }
+    .color-row {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 0.75rem;
+    }
+    .color-row > div {
+      flex: 1;
+    }
+    .color-row label {
+      margin-bottom: 0.25rem;
+    }
+    .color-preview-wrap {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    input[type=color] {
+      width: 48px;
+      height: 36px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      padding: 2px;
+      cursor: pointer;
+      background: white;
+    }
+    .color-hex {
+      font-size: 14px;
+      color: #444;
+      font-family: monospace;
     }
     button {
       background: #2d7dff;
@@ -39,6 +66,7 @@
       padding: 0.5rem 1.2rem;
       border-radius: 6px;
       cursor: pointer;
+      font-size: 16px;
     }
     button:hover { background: #1a5fd4; }
     #qrcode {
@@ -52,6 +80,17 @@
       background: #28a745;
     }
     #download-btn:hover { background: #1e7e34; }
+    #reset-colors {
+      background: none;
+      border: 1px solid #aaa;
+      color: #555;
+      font-size: 13px;
+      padding: 0.25rem 0.6rem;
+      border-radius: 5px;
+      margin-left: 0.5rem;
+      cursor: pointer;
+    }
+    #reset-colors:hover { background: #eee; }
   </style>
 </head>
 <body>
@@ -72,6 +111,24 @@
     <input id="content" type="text" placeholder="例如：https://example.com 或 98765432" />
   </div>
 
+  <div class="color-row">
+    <div>
+      <label>QR Code 顏色（前景）：</label>
+      <div class="color-preview-wrap">
+        <input type="color" id="color-dark" value="#000000" />
+        <span class="color-hex" id="hex-dark">#000000</span>
+      </div>
+    </div>
+    <div>
+      <label>背景顏色：</label>
+      <div class="color-preview-wrap">
+        <input type="color" id="color-light" value="#ffffff" />
+        <span class="color-hex" id="hex-light">#ffffff</span>
+        <button id="reset-colors" title="重設為預設顏色">重設</button>
+      </div>
+    </div>
+  </div>
+
   <div class="row">
     <button id="generate">生成 QR Code</button>
   </div>
@@ -82,11 +139,27 @@
   </div>
 
   <script>
-    var qrInstance = null;
+    // 即時顯示 hex 值
+    document.getElementById("color-dark").addEventListener("input", function() {
+      document.getElementById("hex-dark").textContent = this.value;
+    });
+    document.getElementById("color-light").addEventListener("input", function() {
+      document.getElementById("hex-light").textContent = this.value;
+    });
+
+    // 重設顏色
+    document.getElementById("reset-colors").addEventListener("click", function() {
+      document.getElementById("color-dark").value = "#000000";
+      document.getElementById("color-light").value = "#ffffff";
+      document.getElementById("hex-dark").textContent = "#000000";
+      document.getElementById("hex-light").textContent = "#ffffff";
+    });
 
     document.getElementById("generate").addEventListener("click", function () {
       var type = document.getElementById("type").value;
       var content = document.getElementById("content").value.trim();
+      var colorDark = document.getElementById("color-dark").value;
+      var colorLight = document.getElementById("color-light").value;
 
       if (!content) {
         alert("請先輸入內容");
@@ -105,16 +178,15 @@
       var container = document.getElementById("qrcode");
       container.innerHTML = "";
 
-      qrInstance = new QRCode(container, {
+      new QRCode(container, {
         text: data,
         width: 256,
         height: 256,
-        colorDark: "#000000",
-        colorLight: "#ffffff",
+        colorDark: colorDark,
+        colorLight: colorLight,
         correctLevel: QRCode.CorrectLevel.H
       });
 
-      // 顯示下載按鈕
       setTimeout(function() {
         document.getElementById("download-btn").style.display = "inline-block";
       }, 300);
