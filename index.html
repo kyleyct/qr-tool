@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <title>QR Code 生成工具</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      max-width: 480px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+      background: #f9f9f9;
+    }
+    h1 { font-size: 1.5rem; margin-bottom: 0.25rem; }
+    p { color: #555; margin-bottom: 1rem; }
+    label, input, select, button {
+      font-size: 16px;
+    }
+    .row {
+      margin-bottom: 0.75rem;
+    }
+    label {
+      display: block;
+      margin-bottom: 0.25rem;
+      font-weight: 600;
+    }
+    input, select {
+      width: 100%;
+      padding: 0.4rem 0.6rem;
+      box-sizing: border-box;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+    button {
+      background: #2d7dff;
+      color: white;
+      border: none;
+      padding: 0.5rem 1.2rem;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button:hover { background: #1a5fd4; }
+    #qrcode {
+      margin-top: 1.5rem;
+      display: flex;
+      justify-content: center;
+    }
+    #download-btn {
+      display: none;
+      margin-top: 1rem;
+      background: #28a745;
+    }
+    #download-btn:hover { background: #1e7e34; }
+  </style>
+</head>
+<body>
+  <h1>QR Code 生成器</h1>
+  <p>輸入 URL 或電話號碼，即時生成 QR Code。</p>
+
+  <div class="row">
+    <label for="type">類型：</label>
+    <select id="type">
+      <option value="url">URL</option>
+      <option value="tel">電話號碼</option>
+      <option value="text">純文字</option>
+    </select>
+  </div>
+
+  <div class="row">
+    <label for="content">內容：</label>
+    <input id="content" type="text" placeholder="例如：https://example.com 或 98765432" />
+  </div>
+
+  <div class="row">
+    <button id="generate">生成 QR Code</button>
+  </div>
+
+  <div id="qrcode"></div>
+  <div style="text-align:center;">
+    <button id="download-btn">下載 QR Code（PNG）</button>
+  </div>
+
+  <script>
+    var qrInstance = null;
+
+    document.getElementById("generate").addEventListener("click", function () {
+      var type = document.getElementById("type").value;
+      var content = document.getElementById("content").value.trim();
+
+      if (!content) {
+        alert("請先輸入內容");
+        return;
+      }
+
+      var data;
+      if (type === "url") {
+        data = content;
+      } else if (type === "tel") {
+        data = content.startsWith("tel:") ? content : "tel:" + content;
+      } else {
+        data = content;
+      }
+
+      var container = document.getElementById("qrcode");
+      container.innerHTML = "";
+
+      qrInstance = new QRCode(container, {
+        text: data,
+        width: 256,
+        height: 256,
+        colorDark: "#000000",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.H
+      });
+
+      // 顯示下載按鈕
+      setTimeout(function() {
+        document.getElementById("download-btn").style.display = "inline-block";
+      }, 300);
+    });
+
+    document.getElementById("download-btn").addEventListener("click", function () {
+      var canvas = document.querySelector("#qrcode canvas");
+      if (canvas) {
+        var link = document.createElement("a");
+        link.download = "qrcode.png";
+        link.href = canvas.toDataURL();
+        link.click();
+      }
+    });
+  </script>
+</body>
+</html>
