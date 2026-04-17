@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8" />
-  <title>QR Code 生成工具 Pro</title>
+  <title>QR Code 生成器 Pro</title>
   <!-- 引入 QRCode.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <!-- 引入 Font Awesome 6 -->
@@ -33,7 +33,7 @@
     input[type=color] { width: 44px; height: 38px; border: 1px solid #ddd; border-radius: 6px; cursor: pointer; }
     
     .logo-grid {
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(85px, 1fr));
       gap: 0.6rem; margin-bottom: 1rem;
     }
     .logo-btn {
@@ -42,7 +42,7 @@
       display: flex; flex-direction: column; align-items: center; gap: 0.3rem;
     }
     .logo-btn i { font-size: 20px; }
-    .logo-btn span { font-size: 11px; color: #666; }
+    .logo-btn span { font-size: 11px; color: #666; padding: 0 2px; }
     .logo-btn:hover { border-color: #2d7dff; background: #f0f7ff; }
     .logo-btn.active { border-color: #2d7dff; background: #e6f0ff; color: #2d7dff; font-weight: bold; }
     
@@ -63,6 +63,12 @@
       background: #28a745; color: white; border: none; padding: 0.7rem 1.5rem;
       border-radius: 8px; cursor: pointer; font-size: 15px; font-weight: 600;
     }
+    
+    .wifi-fields {
+        background: #fdfdfd; border: 1px dashed #ccc; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;
+        display: none;
+    }
+    .wifi-fields label { font-size: 13px; color: #555; }
   </style>
 </head>
 <body>
@@ -74,10 +80,27 @@
       <option value="url">網址 (URL)</option>
       <option value="tel">電話號碼</option>
       <option value="text">純文字</option>
+      <option value="wifi">Wi-Fi 網絡</option>
     </select>
 
-    <label>輸入內容：</label>
-    <input type="text" id="content" placeholder="https://example.com" />
+    <div id="standard-content-row">
+      <label id="content-label">輸入內容：</label>
+      <input type="text" id="content" placeholder="https://example.com" />
+    </div>
+
+    <!-- Wi-Fi 專用欄位 -->
+    <div id="wifi-config" class="wifi-fields">
+        <label>網絡名稱 (SSID)：</label>
+        <input type="text" id="wifi-ssid" placeholder="例如：School_Guest" />
+        <label>網絡密碼：</label>
+        <input type="text" id="wifi-pass" placeholder="密碼" />
+        <label>加密類型：</label>
+        <select id="wifi-enc">
+            <option value="WPA">WPA/WPA2 (推薦)</option>
+            <option value="WEP">WEP</option>
+            <option value="nopass">無密碼 (Open)</option>
+        </select>
+    </div>
 
     <div class="color-row">
       <div>
@@ -101,29 +124,29 @@
       <div class="logo-btn active" data-icon="none">
         <i class="fa-solid fa-ban"></i><span>無</span>
       </div>
-      <div class="logo-btn" data-icon="\uf232" data-font="brands">
+      <div class="logo-btn" data-icon="\uf232" data-font="brands" data-linktype="tel">
         <i class="fa-brands fa-whatsapp"></i><span>WhatsApp</span>
       </div>
       <div class="logo-btn" data-icon="\uf1d7" data-font="brands">
         <i class="fa-brands fa-weixin"></i><span>WeChat</span>
       </div>
-      <div class="logo-btn" data-icon="\uf16d" data-font="brands">
-        <i class="fa-brands fa-instagram"></i><span>IG</span>
+      <div class="logo-btn" data-icon="\uf16d" data-font="brands" data-linktype="url">
+        <i class="fa-brands fa-instagram"></i><span>Instagram</span>
       </div>
-      <div class="logo-btn" data-icon="\uf167" data-font="brands">
+      <div class="logo-btn" data-icon="\uf167" data-font="brands" data-linktype="url">
         <i class="fa-brands fa-youtube"></i><span>YouTube</span>
       </div>
       <div class="logo-btn" data-icon="\uf1a0" data-font="brands">
         <i class="fa-brands fa-google"></i><span>Google</span>
       </div>
-      <div class="logo-btn" data-icon="\uf1eb" data-font="solid">
+      <div class="logo-btn" data-icon="\uf1eb" data-font="solid" data-linktype="wifi">
         <i class="fa-solid fa-wifi"></i><span>Wi-Fi</span>
       </div>
       <div class="logo-btn" data-icon="\uf1c1" data-font="solid">
         <i class="fa-solid fa-file-pdf"></i><span>PDF</span>
       </div>
       <div class="logo-btn" data-icon="custom">
-        <i class="fa-solid fa-upload"></i><span>上傳</span>
+        <i class="fa-solid fa-upload"></i><span>自行上傳logo</span>
       </div>
     </div>
     <input type="file" id="upload-input" accept="image/*" style="display:none;" />
@@ -145,6 +168,23 @@
     let selectedFont = "brands";
     let customImgData = null;
 
+    // 類型切換邏輯
+    document.getElementById("type").onchange = function() {
+        const val = this.value;
+        const standardRow = document.getElementById("standard-content-row");
+        const wifiRow = document.getElementById("wifi-config");
+        const label = document.getElementById("content-label");
+        
+        if (val === "wifi") {
+            standardRow.style.display = "none";
+            wifiRow.style.display = "block";
+        } else {
+            standardRow.style.display = "block";
+            wifiRow.style.display = "none";
+            label.innerText = val === "tel" ? "電話號碼：" : (val === "url" ? "網址 (URL)：" : "內容：");
+        }
+    };
+
     // 顏色與 UI 連動
     document.getElementById("color-dark").oninput = e => document.getElementById("hex-dark").innerText = e.target.value;
     document.getElementById("color-light").oninput = e => document.getElementById("hex-light").innerText = e.target.value;
@@ -156,6 +196,13 @@
         this.classList.add("active");
         selectedIcon = this.dataset.icon;
         selectedFont = this.dataset.font;
+
+        // 如果點選 Logo 有對應類型，自動切換
+        if (this.dataset.linktype) {
+            document.getElementById("type").value = this.dataset.linktype;
+            document.getElementById("type").onchange();
+        }
+
         if (selectedIcon === "custom") document.getElementById("upload-input").click();
       };
     });
@@ -170,15 +217,25 @@
     };
 
     document.getElementById("generate-btn").onclick = function() {
-      const content = document.getElementById("content").value.trim();
       const type = document.getElementById("type").value;
       const colorDark = document.getElementById("color-dark").value;
       const colorLight = document.getElementById("color-light").value;
 
-      if (!content) return alert("請輸入內容");
-      let data = (type === "tel" && !content.startsWith("tel:")) ? "tel:" + content : content;
+      let data = "";
+      if (type === "wifi") {
+          const ssid = document.getElementById("wifi-ssid").value.trim();
+          const pass = document.getElementById("wifi-pass").value.trim();
+          const enc = document.getElementById("wifi-enc").value;
+          if (!ssid) return alert("請輸入 Wi-Fi 名稱 (SSID)");
+          // WIFI:S:SSID;T:WPA;P:PASSWORD;;
+          data = `WIFI:S:${ssid};T:${enc};P:${pass};;`;
+      } else {
+          const content = document.getElementById("content").value.trim();
+          if (!content) return alert("請輸入內容");
+          data = (type === "tel" && !content.startsWith("tel:")) ? "tel:" + content : content;
+      }
 
-      // 1. 生成基礎 QR (Level H 容錯)
+      // 1. 生成基礎 QR
       const qrRaw = document.getElementById("qr-raw");
       qrRaw.innerHTML = "";
       new QRCode(qrRaw, {
@@ -202,7 +259,6 @@
           const x = (600 - logoBoxSize) / 2;
           const y = (600 - logoBoxSize) / 2;
 
-          // 繪製背景塊
           ctx.fillStyle = colorLight;
           ctx.beginPath();
           ctx.roundRect(x, y, logoBoxSize, logoBoxSize, 15);
@@ -216,15 +272,12 @@
             };
             img.src = customImgData;
           } else {
-            // 繪製 Font Awesome 圖標
-            ctx.fillStyle = colorDark; // Logo 顏色自動跟隨 QR 顏色
+            ctx.fillStyle = colorDark;
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
             const fontName = selectedFont === "brands" ? "Font Awesome 6 Brands" : "Font Awesome 6 Free";
             const fontWeight = selectedFont === "brands" ? "400" : "900";
             ctx.font = `${fontWeight} ${logoBoxSize * 0.6}px "${fontName}"`;
-            
-            // 確保字體載入
             document.fonts.load(ctx.font).then(() => {
               ctx.fillText(eval(`'${selectedIcon}'`), 600/2, 600/2);
             });
