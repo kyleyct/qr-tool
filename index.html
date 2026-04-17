@@ -7,7 +7,7 @@
   <style>
     body {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      max-width: 520px;
+      max-width: 560px;
       margin: 2rem auto;
       padding: 0 1rem;
       background: #f9f9f9;
@@ -18,7 +18,7 @@
       display: block;
       margin-bottom: 0.25rem;
       font-weight: 600;
-      font-size: 16px;
+      font-size: 15px;
     }
     input[type=text], select {
       width: 100%;
@@ -26,76 +26,94 @@
       box-sizing: border-box;
       border: 1px solid #ccc;
       border-radius: 6px;
-      font-size: 16px;
+      font-size: 15px;
     }
-    .row { margin-bottom: 0.75rem; }
+    .row { margin-bottom: 1rem; }
     .color-row {
       display: flex;
       gap: 1rem;
-      margin-bottom: 0.75rem;
+      margin-bottom: 1rem;
     }
-    .color-row > div {
-      flex: 1;
-    }
-    .color-row label {
-      margin-bottom: 0.25rem;
-    }
-    .color-preview-wrap {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
+    .color-row > div { flex: 1; }
+    .color-preview-wrap { display: flex; align-items: center; gap: 0.5rem; }
     input[type=color] {
-      width: 48px;
-      height: 36px;
+      width: 40px;
+      height: 32px;
       border: 1px solid #ccc;
       border-radius: 6px;
-      padding: 2px;
+      cursor: pointer;
+    }
+    .color-hex { font-size: 13px; color: #666; font-family: monospace; }
+    .logo-options {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+    .logo-item {
+      border: 1px solid #ddd;
+      padding: 0.4rem;
+      border-radius: 6px;
+      text-align: center;
       cursor: pointer;
       background: white;
+      font-size: 13px;
+      transition: all 0.2s;
     }
-    .color-hex {
-      font-size: 14px;
-      color: #444;
-      font-family: monospace;
-    }
+    .logo-item:hover { border-color: #2d7dff; background: #f0f7ff; }
+    .logo-item.active { border-color: #2d7dff; background: #e6f0ff; font-weight: bold; }
+    
+    #custom-logo-input { margin-top: 0.5rem; }
+    
     button {
       background: #2d7dff;
       color: white;
       border: none;
-      padding: 0.5rem 1.2rem;
+      padding: 0.6rem 1.4rem;
       border-radius: 6px;
       cursor: pointer;
       font-size: 16px;
+      width: 100%;
     }
     button:hover { background: #1a5fd4; }
-    #qrcode {
-      margin-top: 1.5rem;
+    
+    #qrcode-container {
+      margin-top: 2rem;
+      position: relative;
       display: flex;
       justify-content: center;
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      width: fit-content;
+      margin-left: auto;
+      margin-right: auto;
     }
+    
+    #qrcode-canvas-wrapper { position: relative; }
+    
     #download-btn {
       display: none;
-      margin-top: 1rem;
+      margin-top: 1.5rem;
       background: #28a745;
     }
     #download-btn:hover { background: #1e7e34; }
+    
     #reset-colors {
       background: none;
-      border: 1px solid #aaa;
-      color: #555;
-      font-size: 13px;
-      padding: 0.25rem 0.6rem;
-      border-radius: 5px;
-      margin-left: 0.5rem;
+      border: 1px solid #ccc;
+      color: #666;
+      font-size: 12px;
+      padding: 2px 6px;
+      border-radius: 4px;
       cursor: pointer;
     }
-    #reset-colors:hover { background: #eee; }
   </style>
 </head>
 <body>
-  <h1>QR Code 生成器</h1>
-  <p>輸入 URL 或電話號碼，即時生成 QR Code。</p>
+  <h1>QR Code 生成器 Pro</h1>
+  <p>自定義顏色、加入 Logo 並即時下載。</p>
 
   <div class="row">
     <label for="type">類型：</label>
@@ -108,99 +126,177 @@
 
   <div class="row">
     <label for="content">內容：</label>
-    <input id="content" type="text" placeholder="例如：https://example.com 或 98765432" />
+    <input id="content" type="text" placeholder="例如：https://example.com" />
   </div>
 
   <div class="color-row">
     <div>
-      <label>QR Code 顏色（前景）：</label>
+      <label>QR 顏色：</label>
       <div class="color-preview-wrap">
         <input type="color" id="color-dark" value="#000000" />
         <span class="color-hex" id="hex-dark">#000000</span>
       </div>
     </div>
     <div>
-      <label>背景顏色：</label>
+      <label>背景顏色：<button id="reset-colors">重設</button></label>
       <div class="color-preview-wrap">
         <input type="color" id="color-light" value="#ffffff" />
         <span class="color-hex" id="hex-light">#ffffff</span>
-        <button id="reset-colors" title="重設為預設顏色">重設</button>
       </div>
     </div>
+  </div>
+
+  <div class="row">
+    <label>加入 Logo (置中)：</label>
+    <div class="logo-options" id="logo-presets">
+      <div class="logo-item active" data-logo="none">無 Logo</div>
+      <div class="logo-item" data-logo="whatsapp">WhatsApp</div>
+      <div class="logo-item" data-logo="wechat">WeChat</div>
+      <div class="logo-item" data-logo="custom">上傳圖片</div>
+    </div>
+    <input type="file" id="custom-logo-file" accept="image/*" style="display:none;" />
   </div>
 
   <div class="row">
     <button id="generate">生成 QR Code</button>
   </div>
 
-  <div id="qrcode"></div>
+  <div id="qrcode-container" style="display:none;">
+    <div id="qrcode-canvas-wrapper">
+      <div id="qrcode-hidden" style="display:none;"></div>
+      <canvas id="final-canvas" width="256" height="256"></canvas>
+    </div>
+  </div>
+
   <div style="text-align:center;">
     <button id="download-btn">下載 QR Code（PNG）</button>
   </div>
 
   <script>
-    // 即時顯示 hex 值
-    document.getElementById("color-dark").addEventListener("input", function() {
-      document.getElementById("hex-dark").textContent = this.value;
-    });
-    document.getElementById("color-light").addEventListener("input", function() {
-      document.getElementById("hex-light").textContent = this.value;
-    });
+    const LOGO_URLS = {
+      whatsapp: "https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg",
+      wechat: "https://upload.wikimedia.org/wikipedia/commons/7/73/WeChat_logo.svg"
+    };
 
-    // 重設顏色
-    document.getElementById("reset-colors").addEventListener("click", function() {
+    let selectedLogoType = "none";
+    let customLogoData = null;
+
+    // 顏色同步
+    document.getElementById("color-dark").oninput = e => document.getElementById("hex-dark").innerText = e.target.value;
+    document.getElementById("color-light").oninput = e => document.getElementById("hex-light").innerText = e.target.value;
+    document.getElementById("reset-colors").onclick = () => {
       document.getElementById("color-dark").value = "#000000";
       document.getElementById("color-light").value = "#ffffff";
-      document.getElementById("hex-dark").textContent = "#000000";
-      document.getElementById("hex-light").textContent = "#ffffff";
+      document.getElementById("hex-dark").innerText = "#000000";
+      document.getElementById("hex-light").innerText = "#ffffff";
+    };
+
+    // Logo 選擇邏輯
+    document.querySelectorAll(".logo-item").forEach(item => {
+      item.onclick = function() {
+        document.querySelectorAll(".logo-item").forEach(i => i.classList.remove("active"));
+        this.classList.add("active");
+        selectedLogoType = this.dataset.logo;
+        if (selectedLogoType === "custom") {
+          document.getElementById("custom-logo-file").click();
+        }
+      };
     });
 
-    document.getElementById("generate").addEventListener("click", function () {
-      var type = document.getElementById("type").value;
-      var content = document.getElementById("content").value.trim();
-      var colorDark = document.getElementById("color-dark").value;
-      var colorLight = document.getElementById("color-light").value;
-
-      if (!content) {
-        alert("請先輸入內容");
-        return;
+    document.getElementById("custom-logo-file").onchange = function(e) {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = e => { customLogoData = e.target.result; };
+        reader.readAsDataURL(file);
       }
+    };
 
-      var data;
-      if (type === "url") {
-        data = content;
-      } else if (type === "tel") {
-        data = content.startsWith("tel:") ? content : "tel:" + content;
-      } else {
-        data = content;
-      }
+    document.getElementById("generate").onclick = function() {
+      const type = document.getElementById("type").value;
+      const content = document.getElementById("content").value.trim();
+      const colorDark = document.getElementById("color-dark").value;
+      const colorLight = document.getElementById("color-light").value;
 
-      var container = document.getElementById("qrcode");
-      container.innerHTML = "";
+      if (!content) return alert("請輸入內容");
 
-      new QRCode(container, {
+      let data = content;
+      if (type === "tel") data = content.startsWith("tel:") ? content : "tel:" + content;
+
+      // 1. 生成基礎 QR
+      const hiddenContainer = document.getElementById("qrcode-hidden");
+      hiddenContainer.innerHTML = "";
+      new QRCode(hiddenContainer, {
         text: data,
-        width: 256,
-        height: 256,
+        width: 512, // 用更高解析度渲染
+        height: 512,
         colorDark: colorDark,
         colorLight: colorLight,
-        correctLevel: QRCode.CorrectLevel.H
+        correctLevel: QRCode.CorrectLevel.H // 重要：加入 Logo 必須用最高容錯率
       });
 
-      setTimeout(function() {
-        document.getElementById("download-btn").style.display = "inline-block";
-      }, 300);
-    });
+      // 2. 等待 QR 渲染完成後繪製到最終 Canvas
+      setTimeout(() => {
+        const qrCanvas = hiddenContainer.querySelector("canvas");
+        const finalCanvas = document.getElementById("final-canvas");
+        const ctx = finalCanvas.getContext("2d");
+        
+        finalCanvas.width = 512;
+        finalCanvas.height = 512;
+        ctx.drawImage(qrCanvas, 0, 0, 512, 512);
 
-    document.getElementById("download-btn").addEventListener("click", function () {
-      var canvas = document.querySelector("#qrcode canvas");
-      if (canvas) {
-        var link = document.createElement("a");
-        link.download = "qrcode.png";
-        link.href = canvas.toDataURL();
-        link.click();
-      }
-    });
+        if (selectedLogoType !== "none") {
+          const logoImg = new Image();
+          logoImg.crossOrigin = "anonymous";
+          
+          logoImg.onload = function() {
+            // 繪製圓角白色背景塊
+            const logoSize = 512 * 0.22;
+            const x = (512 - logoSize) / 2;
+            const y = (512 - logoSize) / 2;
+            
+            ctx.fillStyle = colorLight;
+            // 繪製圓角矩形
+            const radius = 15;
+            ctx.beginPath();
+            ctx.moveTo(x + radius, y);
+            ctx.lineTo(x + logoSize - radius, y);
+            ctx.quadraticCurveTo(x + logoSize, y, x + logoSize, y + radius);
+            ctx.lineTo(x + logoSize, y + logoSize - radius);
+            ctx.quadraticCurveTo(x + logoSize, y + logoSize, x + logoSize - radius, y + logoSize);
+            ctx.lineTo(x + radius, y + logoSize);
+            ctx.quadraticCurveTo(x, y + logoSize, x, y + logoSize - radius);
+            ctx.lineTo(x, y + radius);
+            ctx.quadraticCurveTo(x, y, x + radius, y);
+            ctx.closePath();
+            ctx.fill();
+
+            // 繪製 Logo
+            const padding = 12;
+            ctx.drawImage(logoImg, x + padding, y + padding, logoSize - padding * 2, logoSize - padding * 2);
+            
+            document.getElementById("qrcode-container").style.display = "flex";
+            document.getElementById("download-btn").style.display = "block";
+          };
+
+          if (selectedLogoType === "custom") {
+            logoImg.src = customLogoData;
+          } else {
+            logoImg.src = LOGO_URLS[selectedLogoType];
+          }
+        } else {
+          document.getElementById("qrcode-container").style.display = "flex";
+          document.getElementById("download-btn").style.display = "block";
+        }
+      }, 200);
+    };
+
+    document.getElementById("download-btn").onclick = function() {
+      const link = document.createElement("a");
+      link.download = "qrcode-pro.png";
+      link.href = document.getElementById("final-canvas").toDataURL("image/png");
+      link.click();
+    };
   </script>
 </body>
 </html>
